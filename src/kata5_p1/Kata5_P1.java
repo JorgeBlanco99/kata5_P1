@@ -12,21 +12,34 @@ import java.util.logging.Logger;
  * @author jorge
  */
 public class Kata5_P1 {
-
+    private static String url = "jdbc:sqlite:KATA5.db";
+    private static Connection conn = null;
+    
     public static void main(String[] args) {
-        Connection conn = null;
-        String url = "jdbc:sqlite:KATA5.db";
+        connect();
+        selectAll("PEOPLE");
+        createNewTable();
+        selectAll("EMAIL");
+    }
+    
+    public static Connection connect(){
+        
         try {
             conn = DriverManager.getConnection(url);
             System.out.println("Conexión a SQLite establecida");
         } catch (SQLException ex) {
             Logger.getLogger(Kata5_P1.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return conn;
+    }
+    
+    public static void selectAll(String from){
+        String sql = "SELECT * FROM " + from;
         
-        String sql = "SELECT * FROM PEOPLE";
-        
-        try (  Statement statement = conn.createStatement();
+        try (   //conn = connect();
+                Statement statement = conn.createStatement();
                 ResultSet rs = statement.executeQuery(sql)){
+            System.out.println("");
             
             //Recorrer registros
             while (rs.next()){
@@ -38,7 +51,21 @@ public class Kata5_P1 {
         } catch (SQLException ex) {
             Logger.getLogger(Kata5_P1.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+        System.out.println("");
     }
-
+    
+    public static void createNewTable(){
+        String sql = "CREATE TABLE IF NOT EXISTS EMAIL (\n"
+                + " id integer PRIMARY KEY AUTOINCREMENT, \n"
+                + " direccion text NOT NULL);";
+        
+        try (Connection connection = DriverManager.getConnection(url);
+                Statement statement = connection.createStatement()) {
+            //Crear tabla
+            statement.execute(sql);
+            System.out.println("Tabla creada");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }
