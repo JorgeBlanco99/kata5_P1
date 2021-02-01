@@ -1,10 +1,13 @@
 package kata5_p1;
 
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 /**
@@ -12,18 +15,19 @@ import java.util.logging.Logger;
  * @author jorge
  */
 public class Kata5_P1 {
+      private static final String email = "email.txt";
     private static String url = "jdbc:sqlite:KATA5.db";
-    private static Connection conn = null;
     
     public static void main(String[] args) {
         connect();
+        getEmails();
         selectAll("PEOPLE");
         createNewTable();
         selectAll("EMAIL");
     }
     
     public static Connection connect(){
-        
+        Connection conn = null;
         try {
             conn = DriverManager.getConnection(url);
             System.out.println("Conexión a SQLite establecida");
@@ -33,10 +37,33 @@ public class Kata5_P1 {
         return conn;
     }
     
-    public static void selectAll(String from){
+    private static void getEmails(){
+        try {
+            List<String> emails = MailListReader.read(email);
+            for (String email : emails) {
+                insert(email);
+            }
+            
+        } catch (FileNotFoundException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+    
+    private static void insert(String email){
+        String sql = "INSERT INTO EMAIL(direccion) VALUES(?)";
+        try (Connection conn = connect();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, email);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    
+    private static void selectAll(String from){
         String sql = "SELECT * FROM " + from;
         
-        try (   //conn = connect();
+        try (   Connection conn = connect();
                 Statement statement = conn.createStatement();
                 ResultSet rs = statement.executeQuery(sql)){
             System.out.println("");
@@ -49,7 +76,7 @@ public class Kata5_P1 {
                         rs.getString("Departamento") + "\t");
             }
         } catch (SQLException ex) {
-            Logger.getLogger(Kata5_P1.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println(ex.getMessage());
         }
         System.out.println("");
     }
